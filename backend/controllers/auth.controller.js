@@ -1,14 +1,109 @@
-export const login = (req, res) => {
+import bcrypt from "bcrypt";
+import User from "../models/user.model.js";
+import { generateTokenAndSetCookie } from "../lib/utills/generateToken.js"; // Assuming you have a utility function to generate token and set cookie
+
+export const signup = async (req, res) => {
   // Handle login logic here
-  res.send("Login endpoint");
+  try 
+  {
+    // Example: Authenticate user with username and password
+    const { fullname, email, username, password } = req.body;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      return res.status(400).send("Invalid email format");
+    }
+    const existingUser = await User.findOne({ username});
+    if (existingUser) {
+      return res.status(400).send("Username already exists");
+    }
+    const existingEmail = await User.findOne({ email });
+    if (existingEmail) {
+      return res.status(400).send("Email already exists");
+    }
+    if (!username || !password) {
+      return res.status(400).send("Username and password are required");
+    }
+    //hash the password here if needed
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    const newUser = new User({
+        username,
+        fullname,
+        email,
+        password: hashedPassword,
+    })
+    if (newUser) {  // If user creation is successful
+        generateTokenAndSetCookie(newUser._id, res);  // Generate token and set it as a cookie
+        await newUser.save();  // Save the new user to the database
+
+        res.status(201).json({   // Respond with the new user's data
+            _id: newUser._id,
+            username: newUser.username,
+            fullname: newUser.fullname,
+            email: newUser.email,
+            followers: newUser.followers,
+            following: newUser.following,
+            profilePicture: newUser.profilePicture,
+            coverImg: newUser.coverImg,
+        });
+    } else {  // If user creation failed, send an error response
+        res.status(400).send("User registration failed");
+    }
+  } catch (error) 
+  {
+    console.error("Signup error:", error);
+    res.status(500).send("Internal server error");
+  }
 }
 
-export const register = (req, res) => {
-  // Handle register logic here
-  res.send("register endpoint");
+export const login = async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    const user = await User.findOne({ username });
+    const ispasswordCorrect = await bcrypt.compare(password, user?.password || "");
+    if (!user || !ispasswordCorrect) {
+      return res.status(400).send("Invalid username or password");
+    }
+    generateTokenAndSetCookie(user._id, res);  // Generate token and set it as a cookie
+    res.status(200).json({
+      _id: user._id,
+      username: user.username,
+      fullname: user.fullname,
+      email: user.email,
+      followers: user.followers,
+      following: user.following,
+      profilePicture: user.profilePicture,
+      coverImg: user.coverImg,
+    });
+
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).send("Internal server error");
+  }
 }
 
 export const logout = (req, res) => {
-  // Handle logout logic here
-  res.send("logout endpoint");
+  try{
+    res.clearCookie("token");  // Clear the token cookie
+  res.status(200).send("Logged out successfully");
+  } catch (error) {
+    console.error("Logout error:", error);
+    res.status(500).send("Internal server error");
+  }
+}
+
+export const getMe = async (req, res) => {
+  try {
+    // req.user is set in protectRoute middleware
+    const user = await User.findById(req.user._id).select("-password");  
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json(user);  
+  } catch (error) {
+    console.error("GetMe error:", error);
+    res.status(500).send("Internal server error");
+  }
 }
