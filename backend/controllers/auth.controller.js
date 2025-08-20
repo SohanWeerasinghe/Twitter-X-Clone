@@ -58,13 +58,30 @@ export const signup = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    const { username, password } = req.body;
+    // Accept username/password from body, query params, or form-data
+    const username = req.body.username || req.query.username;
+    const password = req.body.password || req.query.password;
+
+    if (!username || !password) {
+      return res.status(400).send("Username and password are required");
+    }
+
+    // Find user by username
     const user = await User.findOne({ username });
-    const ispasswordCorrect = await bcrypt.compare(password, user?.password || "");
-    if (!user || !ispasswordCorrect) {
+    if (!user) {
       return res.status(400).send("Invalid username or password");
     }
-    generateTokenAndSetCookie(user._id, res);  // Generate token and set it as a cookie
+
+    // Compare password using bcrypt
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+    if (!isPasswordCorrect) {
+      return res.status(400).send("Invalid username or password");
+    }
+
+    // Generate JWT cookie
+    generateTokenAndSetCookie(user._id, res);
+
+    // Return user info
     res.status(200).json({
       _id: user._id,
       username: user.username,
@@ -80,7 +97,8 @@ export const login = async (req, res) => {
     console.error("Login error:", error);
     res.status(500).send("Internal server error");
   }
-}
+};
+
 
 export const logout = (req, res) => {
   try{

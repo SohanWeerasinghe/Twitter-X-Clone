@@ -7,6 +7,7 @@ import { v2 as cloudinary } from "cloudinary";  // Import cloudinary for image u
 import authRoutes from "./routes/auth.route.js";
 import userRoutes from "./routes/user.route.js"; // Import user routes
 import postRoutes from "./routes/post.route.js";
+import notificationRoutes from "./routes/notification.route.js";
 
 import connectMongoDB from "./db/connectMongoDB.js";
 
@@ -27,6 +28,7 @@ app.use(cookieParser()); // Middleware to parse cookies
 app.use("/api/auth",authRoutes);   // Mounting the auth routes
 app.use("/api/user",userRoutes);   // Mounting the auth routes
 app.use("/api/post",postRoutes);   // Mounting the Post routes
+app.use("/api/notification",notificationRoutes);   // Mounting the Post routes
 
 app.listen(PORT, () => {
   console.log('Server is running on http://localhost:' + PORT);
