@@ -3,8 +3,10 @@ import cookieParser from "cookie-parser";
 import dotenv from "dotenv";  // Import dotenv to manage environment variables
 import { v2 as cloudinary } from "cloudinary";  // Import cloudinary for image uploads
 
+
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js"; // Import user routes
+import postRoutes from "./routes/post.routes.js";
 
 import connectMongoDB from "./db/connectMongoDB.js";
 
@@ -24,7 +26,7 @@ app.use(cookieParser()); // Middleware to parse cookies
 
 app.use("/api/auth",authRoutes);   // Mounting the auth routes
 app.use("/api/user",userRoutes);   // Mounting the auth routes
-
+app.use("/api/post",postRoutes);   // Mounting the Post routes
 
 app.listen(PORT, () => {
   console.log('Server is running on http://localhost:' + PORT);

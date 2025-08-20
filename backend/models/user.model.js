@@ -45,6 +45,13 @@ const userSchema = new mongoose.Schema({
         type: String, 
         default: 'default-cover.png' 
     },
+    likedPosts: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Post",
+            default: []
+        }
+    ],
     },{timeseries: true}
 );   //timeseries: true is used for time series data
 
